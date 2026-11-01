@@ -1,0 +1,68 @@
+name: MacCleaner
+options:
+  bundleIdPrefix: com.local
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: NO
+    GENERATE_INFOPLIST_FILE: YES
+targets:
+  MacCleanerCore:
+    type: framework
+    platform: macOS
+    sources: [Sources/Core, Sources/Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.local.MacCleanerCore
+  MacCleanerFanHelper:
+    type: tool
+    platform: macOS
+    sources: [Sources/Helper, Sources/Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.local.MacCleaner.FanHelper
+        SKIP_INSTALL: YES
+  MacCleaner:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/App
+      - path: Resources/LaunchDaemons/com.local.MacCleaner.FanHelper.plist
+        buildPhase:
+          copyFiles:
+            destination: wrapper
+            subpath: Contents/Library/LaunchDaemons
+    dependencies:
+      - target: MacCleanerCore
+      - target: MacCleanerFanHelper
+        copy:
+          destination: executables
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.local.MacCleaner
+        INFOPLIST_KEY_CFBundleDisplayName: Mac Cleaner
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_APP_SANDBOX: NO
+  CoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [Tests/CoreTests]
+    dependencies:
+      - target: MacCleanerCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.local.MacCleanerCoreTests
+schemes:
+  MacCleaner:
+    build:
+      targets:
+        MacCleaner: all
+    test:
+      targets: [CoreTests]
