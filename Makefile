@@ -6,7 +6,7 @@ CONFIG ?= Debug
 # Ký ad-hoc thì mỗi bản build là một "app mới" và bị hỏi quyền lại.
 SIGN_ID ?= 116C280C9B0323FEED9DE844FAB103994AB3E692
 
-.PHONY: gen build test run install clean
+.PHONY: gen build test run install dmg clean
 
 gen:
 	xcodegen generate --quiet
@@ -28,6 +28,16 @@ install:
 	$(MAKE) build CONFIG=Release
 	rm -rf /Applications/MacCleaner.app
 	cp -R build/Build/Products/Release/MacCleaner.app /Applications/
+
+# File cài đặt: kéo MacCleaner.app vào Applications. Ra build/MacCleaner.dmg.
+dmg:
+	$(MAKE) build CONFIG=Release
+	rm -rf build/dmg build/MacCleaner.dmg
+	mkdir -p build/dmg
+	cp -R build/Build/Products/Release/MacCleaner.app build/dmg/
+	ln -s /Applications build/dmg/Applications
+	hdiutil create -volname "Mac Cleaner" -srcfolder build/dmg -format UDZO -ov build/MacCleaner.dmg
+	codesign --force --sign $(SIGN_ID) build/MacCleaner.dmg
 
 clean:
 	rm -rf build $(PROJECT)
